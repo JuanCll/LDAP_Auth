@@ -1,0 +1,64 @@
+﻿version: '3'
+
+
+services:
+  authms:
+    image: authms
+    container_name: authms_l
+    ports:
+        - "7049:80"
+    environment:
+      ASPNETCORE_URLS: "http://+"
+      ASPNETCORE_ENVIRONMENT: Development
+    links:
+      - wings-ldap
+
+
+  wings-ldap:
+    image: osixia/openldap:1.1.8
+    container_name: wings-ldap
+    environment:
+      COMPOSE_HTTP_TIMEOUT: 200
+      LDAP_LOG_LEVEL: "256"
+      LDAP_ORGANISATION: "Wings"
+      LDAP_DOMAIN: "wings.co"
+      LDAP_BASE_DN: ""
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_CONFIG_PASSWORD: "config"
+      LDAP_READONLY_USER: "false"
+      LDAP_BACKEND: "hdb"
+      LDAP_TLS: "true"
+      LDAP_TLS_CRT_FILENAME: "ldap.crt"
+      LDAP_TLS_KEY_FILENAME: "ldap.key"
+      LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
+      LDAP_TLS_ENFORCE: "false"
+      LDAP_TLS_CIPHER_SUITE: "SECURE256:-VERS-SSL3.0"
+      LDAP_TLS_PROTOCOL_MIN: "3.1"
+      LDAP_TLS_VERIFY_CLIENT: "demand"
+      LDAP_REPLICATION: "false"
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "true"
+      LDAP_SSL_HELPER_PREFIX: "ldap"
+    tty: true
+    stdin_open: true
+    volumes:
+      - /var/lib/ldap
+      - /etc/ldap/slapd.d
+      - /container/service/slapd/assets/certs/
+    ports:
+      - "389:389"
+      - "636:636"
+    hostname: "wings.co"
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    container_name: ldap_client_w
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "wings-ldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "8095:80"
+    links:
+      - wings-ldap
+
+
+
